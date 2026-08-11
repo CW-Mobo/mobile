@@ -1,0 +1,12 @@
+expo-env.d.ts
+.gitignore
+# @end expo-cli
+node_modules/
+.git/
+*.log
+.env
+.env.local
+android/
+ios/
+.expo/
+.idea/

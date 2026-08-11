@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Mobo",
+    "slug": "Mobo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/moboIcon.png",
+    "scheme": "mobo",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/monochromeIcon.png",
+        "backgroundColor": "#61743D"
+      },
+      "navigationBar": {
+        "backgroundColor": "#6e002600",
+        "barStyle": "light-content"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cypherwave.mobo"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#61743D",
+          "dark": {
+            "backgroundColor": "#61743D"
+          },
+          "imageWidth": 220,
+          "statusBar": {
+            "style": "dark"
+          }
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d99d2039-711e-402e-829c-141a31a5358a"
+      }
+    }
+  }
+}
