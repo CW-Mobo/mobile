@@ -43,17 +43,19 @@ A aplicação permite acompanhar informações do sistema, visualizar dados da p
 ## 🏗️ Arquitetura
 
 ```text
-mobile
-├── app
-├── assets
-├── components
-├── config
+mobile/
+├── app/
+├── assets/
+├── components/
+├── config/
 ├── .easignore
 ├── .gitignore
 ├── app.json
 ├── eas.json
+├── LICENSE
 ├── package.json
 ├── package-lock.json
+├── README.md
 └── tsconfig.json
 ```
 
