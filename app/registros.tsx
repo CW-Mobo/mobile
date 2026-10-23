@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { TopBrandBar, colors } from '../components/mobo-ui';
+import BottomNav from '../components/BottomNav';
 
 const lichiaImages: ImageSourcePropType[] = [
     require('../assets/images/lichia6.jpeg'),
@@ -76,7 +77,7 @@ export default function Registros() {
                 contentContainerStyle={{
                     paddingHorizontal: 24,
                     paddingTop: 26,
-                    paddingBottom: 110,
+                    paddingBottom: 130,
                 }}
             >
                 <View
@@ -87,9 +88,12 @@ export default function Registros() {
                         marginBottom: 24,
                     }}
                 >
-                    <TouchableOpacity activeOpacity={0.8} onPress={() => router.back()}>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => router.replace('/home')}
+                        >
                         <Ionicons name="chevron-back" size={32} color={colors.text} />
-                    </TouchableOpacity>
+                        </TouchableOpacity>
 
                     <Text
                         style={{
@@ -275,6 +279,9 @@ export default function Registros() {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
-        </View>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+      <BottomNav />
+    </View>
+    </View>
     );
 }

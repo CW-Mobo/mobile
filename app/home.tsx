@@ -8,8 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import BottomNav from '../components/BottomNav';
+import { useState } from "react";
+import NotificationsSidebar from "../components/NotificationsSidebar";
+
 
 export default function Home() {
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F2EB" }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -63,6 +68,8 @@ export default function Home() {
             </View>
 
             <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setNotificationsVisible(true)}
               style={{
                 width: 62,
                 height: 62,
@@ -237,7 +244,7 @@ export default function Home() {
               paddingBottom: 30,
             }}
           >
-            <TouchableOpacity
+            {/* <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/previsao-de-colheita")}
               style={{
@@ -254,7 +261,7 @@ export default function Home() {
               }}
             >
               {/* IMAGEM */}
-              <View
+              {/* <View
                 style={{
                   height: 120,
                   borderRadius: 16,
@@ -286,10 +293,10 @@ export default function Home() {
                 >
                   <Ionicons name="heart-outline" size={18} color="#FFFFFF" />
                 </View>
-              </View>
+              </View> */}
 
               {/* TÍTULO */}
-              <Text
+              {/* <Text
                 style={{
                   fontFamily: "Livvic_700Bold",
                   fontSize: 18,
@@ -297,10 +304,10 @@ export default function Home() {
                 }}
               >
                 Colheita do dia
-              </Text>
+              </Text> */}
 
               {/* SUBTÍTULO */}
-              <Text
+              {/* <Text
                 style={{
                   fontFamily: "Livvic_400Regular",
                   fontSize: 16,
@@ -309,10 +316,10 @@ export default function Home() {
                 }}
               >
                 Anotações
-              </Text>
+              </Text> */}
 
               {/* TEMPO */}
-              <View
+              {/* <View
                 style={{
                   marginTop: 10,
                   alignSelf: "flex-start",
@@ -346,8 +353,8 @@ export default function Home() {
                     6h 30min
                   </Text>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </View> */}
+            {/* </TouchableOpacity>  */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push("/previsao-de-colheita")}
@@ -446,6 +453,13 @@ export default function Home() {
           </ScrollView>
         </View>
       </ScrollView>
+      <NotificationsSidebar
+        visible={notificationsVisible}
+        onClose={() => setNotificationsVisible(false)}
+      />
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+      <BottomNav />
+    </View>
     </View>
   );
 }
