@@ -18,8 +18,8 @@
         "backgroundColor": "#61743D"
       },
       "navigationBar": {
-        "backgroundColor": "#6e002600",
-        "barStyle": "light-content"
+        "backgroundColor": "#FFFFFF",
+        "barStyle": "dark-content"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

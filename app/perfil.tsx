@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   Image,
   ImageBackground,
@@ -8,11 +9,52 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { NoteList, PrimaryButton, RecordCard, colors } from '../components/mobo-ui';
+import { NoteList } from '../components/NoteList';
+import { colors } from '../theme/colors';
 import BottomNav from '../components/BottomNav';
+import { signOut } from '../services/auth';
+import { fetchAllHarvests, type Harvest } from '../services/harvests';
+import { fetchCurrentUser, type UserProfile } from '../services/users';
 
 export default function Perfil() {
   const [activeTab, setActiveTab] = useState<'notes' | 'records'>('notes');
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [harvests, setHarvests] = useState<Harvest[]>([]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    Promise.allSettled([fetchCurrentUser(), fetchAllHarvests()]).then(
+      ([userResult, harvestResult]) => {
+        if (!isActive) return;
+        if (userResult.status === 'fulfilled') setUser(userResult.value);
+        if (harvestResult.status === 'fulfilled') {
+          setHarvests(harvestResult.value);
+        }
+      },
+    );
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const roleLabels: Record<string, string> = {
+    family_farmer: 'Agricultor Familiar',
+    company_admin: 'Administrador da empresa',
+    company_worker: 'Funcionário',
+  };
+  const roleLabel = roleLabels[user?.userRole ?? ''] ?? 'Usuário';
+
+  async function handleLogout() {
+    try {
+      await signOut();
+    } catch {
+      // Encerra a sessão local mesmo quando a API não responde.
+    } finally {
+      router.replace('/login');
+    }
+  }
 
   return (
   <ImageBackground
@@ -22,7 +64,7 @@ export default function Perfil() {
   >
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 140 }}
     >
       <View
         style={{
@@ -37,6 +79,22 @@ export default function Perfil() {
           style={{ width: 40, height: 40 }}
           resizeMode="contain"
         />
+        <TouchableOpacity
+          onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Sair da conta"
+          style={{
+            position: 'absolute',
+            right: 24,
+            top: 34,
+            width: 44,
+            height: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ionicons name="log-out-outline" size={28} color={colors.cream} />
+        </TouchableOpacity>
       </View>
 
         <View style={{ alignItems: 'center', marginTop: -78 }}>
@@ -61,30 +119,12 @@ export default function Perfil() {
               }}
             >
               <Image
-                source={require('../assets/images/funcionaria.jpg')}
+                source={user?.userImage ? { uri: user.userImage } : require('../assets/images/funcionaria.jpg')}
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="cover"
               />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={{
-                position: 'absolute',
-                top: -6,
-                right: -6,
-                width: 42,
-                height: 42,
-                borderRadius: 21,
-                backgroundColor: colors.red,
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10,
-                elevation: 5,
-              }}
-            >
-              <Ionicons name="add" size={32} color={colors.white} />
-            </TouchableOpacity>
           </View>
 
 
@@ -97,7 +137,7 @@ export default function Perfil() {
             }}
           >
             <Text style={{ fontFamily: 'Livvic_700Bold', fontSize: 22, color: colors.red }}>
-              Fernanda Mendes
+              {user?.userName ?? 'Carregando perfil...'}
             </Text>
             <Text
               style={{
@@ -107,12 +147,12 @@ export default function Perfil() {
                 marginTop: 12,
               }}
             >
-              Funcionário - Empresa Tal
+              {roleLabel}{user?.company ? ' • Empresa vinculada' : ''}
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-              <Ionicons name="location" size={18} color="#BDBDBD" />
+              <Ionicons name="mail-outline" size={18} color="#BDBDBD" />
               <Text style={{ fontFamily: 'Livvic_400Regular', fontSize: 16, color: '#77777D' }}>
-                Localização
+                {user?.userEmail ?? 'Dados da conta'}
               </Text>
             </View>
             <Text
@@ -123,15 +163,9 @@ export default function Perfil() {
                 marginTop: 8,
               }}
             >
-              20 anotações • 10 Registros
+              {harvests.length} registros de colheita
             </Text>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={{ position: 'absolute', right: 28, top: 26 }}
-            >
-              <Ionicons name="pencil" size={30} color="#000000" />
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -185,7 +219,7 @@ export default function Perfil() {
               <View style={{ marginTop: 10, alignItems: 'center' }}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => router.push('/(tabs)/calendario')}
+                onPress={() => router.push('/registros')}
                 style={{
                   width: '76%',
                   height: 48,
@@ -202,15 +236,32 @@ export default function Perfil() {
                     color: colors.white,
                   }}
                 >
-                  Ver Tudo
+                  Ver Registros
                 </Text>
               </TouchableOpacity>
             </View>
             </>
           ) : (
             <View>
-              <RecordCard index={0} />
-              <RecordCard index={1} />
+              {harvests.length === 0 ? (
+                <Text style={{ textAlign: 'center', color: colors.olive, fontFamily: 'Livvic_400Regular' }}>
+                  Nenhuma colheita registrada ainda.
+                </Text>
+              ) : harvests.slice(0, 5).map((harvest) => {
+                const plantingName = typeof harvest.planting === 'object'
+                  ? harvest.planting?.plantingName
+                  : undefined;
+                return (
+                  <View key={harvest._id} style={{ backgroundColor: colors.white, borderRadius: 14, padding: 14, marginBottom: 12 }}>
+                    <Text style={{ color: colors.text, fontFamily: 'Livvic_700Bold', fontSize: 17 }}>
+                      {plantingName ?? 'Colheita registrada'}
+                    </Text>
+                    <Text style={{ color: colors.muted, fontFamily: 'Livvic_400Regular', marginTop: 6 }}>
+                      {harvest.harvestedQuantity} unidades • {new Date(harvest.harvestDate).toLocaleDateString('pt-BR')}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>

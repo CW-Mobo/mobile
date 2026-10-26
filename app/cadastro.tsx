@@ -18,11 +18,10 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import api from "../config/api";
-import { saveToken } from "../config/auth";
-import { colors } from "../components/mobo-ui";
+import { registerAccount } from "../services/auth";
+import { colors } from "../theme/colors";
 
-const accountOptions = ["Nenhum", "CEO de Empresa", "Agricultor Familiar"];
+const accountOptions = ["CEO de Empresa", "Funcionário", "Agricultor Familiar"];
 
 export default function Cadastro() {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +30,8 @@ export default function Cadastro() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [accountType, setAccountType] = useState("Nenhum");
+  const [accountType, setAccountType] = useState("Agricultor Familiar");
+  const [companyId, setCompanyId] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
@@ -41,6 +41,11 @@ export default function Cadastro() {
   const { width, height } = useWindowDimensions();
   const horizontalPadding = width * 0.1;
   const isAgricultor = accountType === "Agricultor Familiar";
+  const userRole = isAgricultor
+    ? "family_farmer"
+    : accountType === "CEO de Empresa"
+      ? "company_admin"
+      : "company_worker";
 
   async function handlePickProfileImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -84,33 +89,46 @@ export default function Cadastro() {
       alert("Preencha o CPF.");
       return;
     }
+    if (isAgricultor && dap.trim().length < 10) {
+      alert("O DAP deve ter pelo menos 10 caracteres.");
+      return;
+    }
+    if (!isAgricultor && !companyId.trim()) {
+      alert("Informe o código da empresa para vincular sua conta.");
+      return;
+    }
+    if (!isAgricultor && !/^[a-f\d]{24}$/i.test(companyId.trim())) {
+      alert("O código da empresa deve ser um ID válido.");
+      return;
+    }
 
     try {
       const formData = new FormData();
       formData.append("userName", name);
       formData.append("userEmail", email);
       formData.append("userPassword", password);
-      formData.append("userRole", accountType);
+      formData.append("userRole", userRole);
       formData.append("userPhone", phone.replace(/\D/g, ""));
       if (isAgricultor) {
-        formData.append("farmerDetails.cpf", cpf.replace(/\D/g, ""));
-        formData.append("farmerDetails.dap", dap);
+        formData.append("farmerDetails[cpf]", cpf);
+        formData.append("farmerDetails[dap]", dap.trim().toUpperCase());
+      } else {
+        formData.append("company", companyId.trim());
       }
 
       if (profileImage) {
         const filename = profileImage.split("/").pop() ?? "profile.jpg";
-        formData.append("profileImage", {
+        formData.append("userImage", {
           uri: profileImage,
           name: filename,
-          type: "image/jpeg, image/png, image/jpg",
+          type: filename.toLowerCase().endsWith(".png")
+            ? "image/png"
+            : "image/jpeg",
         } as any);
       }
 
-      const response = await api.post("/auth/register", formData);
-      if (response.data.success) {
-        await saveToken(response.data.token);
-        router.replace("/home");
-      }
+      await registerAccount(formData);
+      router.replace("/home");
     } catch (error: any) {
       const mensagem =
         error.response?.data?.message || "Erro ao cadastrar. Tente novamente.";
@@ -123,7 +141,7 @@ export default function Cadastro() {
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <StatusBar style="light" backgroundColor={colors.red} />
+      <StatusBar style="light" />
 
       <ScrollView
         style={styles.scroll}
@@ -287,6 +305,30 @@ export default function Cadastro() {
                     placeholder="000.000.000-00"
                     placeholderTextColor="#D38BA2"
                     keyboardType="number-pad"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+            )}
+
+            {!isAgricultor && (
+              <View style={styles.fieldWrapper}>
+                <View style={styles.labelBox}>
+                  <Text style={styles.labelText}>Código da empresa</Text>
+                </View>
+                <View style={styles.field}>
+                  <Ionicons
+                    name="business-outline"
+                    size={31}
+                    color={colors.cream}
+                    style={styles.fieldIcon}
+                  />
+                  <TextInput
+                    value={companyId}
+                    onChangeText={setCompanyId}
+                    placeholder="ID da empresa"
+                    placeholderTextColor="#D38BA2"
+                    autoCapitalize="none"
                     style={styles.input}
                   />
                 </View>

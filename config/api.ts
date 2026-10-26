@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const api = axios.create({
-  baseURL: "https://mobo-m9ug.onrender.com/api",
+  baseURL: `${(process.env.EXPO_PUBLIC_API_URL || "https://mobo-m9ug.onrender.com").replace(/\/$/, "")}/api`,
   withCredentials: true,
   timeout: 15000,
 });
@@ -11,8 +11,6 @@ const api = axios.create({
 // 🔵 REQUEST
 api.interceptors.request.use(
   async (config) => {
-    console.log("➡️ Request:", config.method?.toUpperCase(), config.url);
-
     const token = await AsyncStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -32,17 +30,17 @@ api.interceptors.request.use(
 // 🔴 RESPONSE
 api.interceptors.response.use(
   (response) => {
-    console.log("✅ Response:", response.status, response.config.url);
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) return Promise.reject(error);
+
     if (!error.response) {
-      console.error("🌐 Erro de rede ou servidor offline:", error.message);
-      if (!originalRequest._retry) {
+      const isSafeToRetry = originalRequest.method?.toLowerCase() === "get";
+      if (isSafeToRetry && !originalRequest._retry) {
         originalRequest._retry = true;
-        console.log("🔁 Tentando novamente...");
         return api(originalRequest);
       }
       return Promise.reject({
@@ -52,18 +50,15 @@ api.interceptors.response.use(
 
     const status = error.response.status;
 
-    if (status === 401 && !originalRequest._retry) {
+    const isPublicAuthRequest = /\/auth\/(login|register)$/.test(
+      originalRequest.url ?? "",
+    );
+
+    if (status === 401 && !isPublicAuthRequest && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.warn("🔒 Não autenticado, redirecionando...");
       await AsyncStorage.removeItem("token");
       router.replace("/login");
     }
-
-    if (status === 403) console.warn("⛔ Acesso negado");
-    if (status === 404)
-      console.warn("❓ Endpoint não encontrado:", originalRequest.url);
-    if (status >= 500)
-      console.error("🔥 Erro no servidor:", error.response.data);
 
     return Promise.reject(error);
   },

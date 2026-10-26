@@ -9,31 +9,32 @@ import {
   View,
 } from "react-native";
 import BottomNav from '../components/BottomNav';
-import { useState } from "react";
+import { TopBrandBar } from '../components/TopBrandBar';
+import { useEffect, useState } from "react";
 import NotificationsSidebar from "../components/NotificationsSidebar";
+import { fetchCurrentUser } from '../services/users';
 
 
 export default function Home() {
   const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [userName, setUserName] = useState("Usuário");
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((user) => {
+        const name = user.userName;
+        if (name) setUserName(name.trim().split(/\s+/)[0]);
+      })
+      .catch(() => undefined);
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F2EB" }}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* FAIXA VERMELHA */}
-        <View
-          style={{
-            height: 55,
-            backgroundColor: "#C2193D",
-            justifyContent: "center",
-            paddingHorizontal: 24,
-          }}
-        >
-          <Image
-            source={require("../assets/images/mb-bege.png")}
-            style={{ width: 40, height: 40 }}
-            resizeMode="contain"
-          />
-        </View>
-
+      <TopBrandBar />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+      >
         {/* CONTEÚDO */}
         <View style={{ paddingHorizontal: 28, paddingTop: 32 }}>
           <View
@@ -52,7 +53,7 @@ export default function Home() {
                   color: "#2B2B2B",
                 }}
               >
-                Olá, Usuário!
+                Olá, {userName}!
               </Text>
 
               <Text
@@ -244,9 +245,9 @@ export default function Home() {
               paddingBottom: 30,
             }}
           >
-            {/* <TouchableOpacity
+            <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => router.push("/previsao-de-colheita")}
+              onPress={() => router.push("/registros")}
               style={{
                 width: 220,
                 backgroundColor: "#FFFFFF",
@@ -261,7 +262,7 @@ export default function Home() {
               }}
             >
               {/* IMAGEM */}
-              {/* <View
+              <View
                 style={{
                   height: 120,
                   borderRadius: 16,
@@ -293,10 +294,10 @@ export default function Home() {
                 >
                   <Ionicons name="heart-outline" size={18} color="#FFFFFF" />
                 </View>
-              </View> */}
+              </View>
 
               {/* TÍTULO */}
-              {/* <Text
+              <Text
                 style={{
                   fontFamily: "Livvic_700Bold",
                   fontSize: 18,
@@ -304,10 +305,10 @@ export default function Home() {
                 }}
               >
                 Colheita do dia
-              </Text> */}
+              </Text>
 
               {/* SUBTÍTULO */}
-              {/* <Text
+              <Text
                 style={{
                   fontFamily: "Livvic_400Regular",
                   fontSize: 16,
@@ -316,10 +317,10 @@ export default function Home() {
                 }}
               >
                 Anotações
-              </Text> */}
+              </Text>
 
               {/* TEMPO */}
-              {/* <View
+              <View
                 style={{
                   marginTop: 10,
                   alignSelf: "flex-start",
@@ -353,11 +354,11 @@ export default function Home() {
                     6h 30min
                   </Text>
                 </View>
-              </View> */}
-            {/* </TouchableOpacity>  */}
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => router.push("/previsao-de-colheita")}
+              onPress={() => router.push("/controle")}
               style={{
                 width: 220,
                 backgroundColor: "#FFFFFF",

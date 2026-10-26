@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-import { colors } from '../components/mobo-ui';
+import { colors } from '../theme/colors';
 
 const accountOptions = [
   'Nenhum',
@@ -65,7 +65,7 @@ export default function CompletarCadastro() {
       return;
     }
 
-    router.replace('/(tabs)/home');
+    router.replace('/home');
   }
 
   return (
@@ -73,7 +73,7 @@ export default function CompletarCadastro() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar style="light" backgroundColor={colors.red} />
+      <StatusBar style="light" />
 
       <ScrollView
         style={styles.scroll}

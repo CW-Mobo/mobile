@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
     Image,
     ImageSourcePropType,
     ScrollView,
@@ -10,8 +12,10 @@ import {
     View,
 } from 'react-native';
 
-import { TopBrandBar, colors } from '../components/mobo-ui';
+import { TopBrandBar } from '../components/TopBrandBar';
+import { colors } from '../theme/colors';
 import BottomNav from '../components/BottomNav';
+import { fetchHarvests, type Harvest } from '../services/harvests';
 
 const lichiaImages: ImageSourcePropType[] = [
     require('../assets/images/lichia6.jpeg'),
@@ -22,52 +26,50 @@ const lichiaImages: ImageSourcePropType[] = [
     require('../assets/images/lichia1.png'),
 ];
 
-const records = [
-    {
-        id: 1,
-        title: 'Registro 1',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[0],
-    },
-    {
-        id: 2,
-        title: 'Registro 2',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[1],
-    },
-    {
-        id: 3,
-        title: 'Registro 3',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[2],
-    },
-    {
-        id: 4,
-        title: 'Registro 4',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[3],
-    },
-    {
-        id: 5,
-        title: 'Registro 5',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[4],
-    },
-    {
-        id: 6,
-        title: 'Registro 6',
-        subtitle: 'Primeira colheita do dia',
-        date: '01/06/26 - 6h 30min',
-        image: lichiaImages[5],
-    },
-];
-
 export default function Registros() {
+    const [harvests, setHarvests] = useState<Harvest[]>([]);
+    const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        async function loadHarvests() {
+            try {
+                setHarvests(await fetchHarvests());
+            } catch (requestError: any) {
+                setError(requestError.response?.data?.message ?? 'Não foi possível carregar os registros.');
+            } finally {
+                setLoading(false);
+            }
+        }
+        void loadHarvests();
+    }, []);
+
+    const records = useMemo(() => harvests
+        .filter((harvest) => {
+            const query = search.trim().toLocaleLowerCase('pt-BR');
+            if (!query) return true;
+            const plantingName = typeof harvest.planting === 'object'
+                ? harvest.planting?.plantingName ?? ''
+                : '';
+            return `${plantingName} ${harvest.harvestedQuantity} ${new Date(harvest.harvestDate).toLocaleDateString('pt-BR')}`
+                .toLocaleLowerCase('pt-BR')
+                .includes(query);
+        })
+        .map((harvest, index) => {
+            const date = new Date(harvest.harvestDate);
+            const plantingName = typeof harvest.planting === 'object'
+                ? harvest.planting?.plantingName
+                : undefined;
+            return {
+                id: harvest._id,
+                title: `${harvest.harvestedQuantity} unidades colhidas`,
+                subtitle: plantingName ?? 'Colheita registrada',
+                date: Number.isNaN(date.getTime()) ? 'Data não informada' : date.toLocaleDateString('pt-BR'),
+                image: lichiaImages[index % lichiaImages.length],
+            };
+        }), [harvests, search]);
+
     return (
         <View style={{ flex: 1, backgroundColor: colors.cream }}>
             <TopBrandBar />
@@ -105,31 +107,7 @@ export default function Registros() {
                         Registros
                     </Text>
 
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: 16,
-                            backgroundColor: colors.white,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Ionicons name="notifications-outline" size={26} color={colors.text} />
-
-                        <View
-                            style={{
-                                position: 'absolute',
-                                top: 14,
-                                right: 12,
-                                width: 9,
-                                height: 9,
-                                borderRadius: 5,
-                                backgroundColor: colors.red,
-                            }}
-                        />
-                    </TouchableOpacity>
+                    <View style={{ width: 32 }} />
                 </View>
 
                 <View
@@ -154,6 +132,8 @@ export default function Registros() {
                         <Ionicons name="search-outline" size={26} color="#B4B4B4" />
 
                         <TextInput
+                            value={search}
+                            onChangeText={setSearch}
                             placeholder="Pesquisar...."
                             placeholderTextColor="#B4B4B4"
                             style={{
@@ -166,53 +146,17 @@ export default function Registros() {
                         />
                     </View>
 
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 16,
-                            backgroundColor: colors.wine,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        <Ionicons name="options-outline" size={26} color={colors.white} />
-                    </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity
-                    activeOpacity={0.85}
-                    style={{
-                        alignSelf: 'flex-start',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        borderRadius: 14,
-                        backgroundColor: colors.oliveLight,
-                        paddingHorizontal: 14,
-                        paddingVertical: 9,
-                        marginBottom: 18,
-                    }}
-                >
-                    <Text
-                        style={{
-                            fontFamily: 'Livvic_700Bold',
-                            fontSize: 17,
-                            color: colors.white,
-                        }}
-                    >
-                        Hoje
+                {loading ? (
+                    <ActivityIndicator size="large" color={colors.red} style={{ marginTop: 32 }} />
+                ) : error ? (
+                    <Text style={{ textAlign: 'center', color: colors.red, marginVertical: 24 }}>{error}</Text>
+                ) : records.length === 0 ? (
+                    <Text style={{ textAlign: 'center', color: colors.muted, marginVertical: 24 }}>
+                        {harvests.length ? 'Nenhum registro corresponde à pesquisa.' : 'Nenhuma colheita registrada ainda.'}
                     </Text>
-
-                    <Ionicons
-                        name="close"
-                        size={20}
-                        color={colors.white}
-                        style={{ marginLeft: 8 }}
-                    />
-                </TouchableOpacity>
-
-                {records.map((record) => (
+                ) : records.map((record) => (
                     <TouchableOpacity
                         key={record.id}
                         activeOpacity={0.85}

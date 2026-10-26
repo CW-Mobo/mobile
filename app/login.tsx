@@ -15,9 +15,8 @@ import {
   BackHandler,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import api from "../config/api";
-import { saveToken } from "../config/auth";
-import { colors } from "../components/mobo-ui";
+import { signIn } from "../services/auth";
+import { colors } from "../theme/colors";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -45,15 +44,8 @@ export default function Login() {
     }
 
     try {
-      const response = await api.post("auth/login", {
-        userEmail: email,
-        userPassword: password,
-      });
-
-      if (response.data.success) {
-        await saveToken(response.data.token);
-        router.replace("/home");
-      }
+      await signIn(email, password);
+      router.replace("/home");
     } catch (error: any) {
       const mensagem = error.response?.data?.message || "Erro ao fazer login.";
       alert(mensagem);
@@ -65,7 +57,7 @@ export default function Login() {
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <StatusBar style="light" backgroundColor={colors.red} />
+      <StatusBar style="light" />
 
       <ScrollView
         style={styles.scroll}

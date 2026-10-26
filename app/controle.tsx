@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';import { router, Stack } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ROBOT_WS_URL } from '../config/robot';
+import { useRobotSocket } from '../hooks/useRobotSocket';
 import {
   Alert,
   Animated,
@@ -19,7 +21,12 @@ import {
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
 export default function Controle() {
-  const ROBOT_WS_URL = 'ws://192.168.4.1:81';
+  const {
+    status: connectionStatus,
+    connect: connectRobotSocket,
+    disconnect: disconnectRobotSocket,
+    sendCommand: sendRobotCommand,
+  } = useRobotSocket(ROBOT_WS_URL);
   const leftJoystick = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const rightJoystick = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const cameraDrift = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -34,16 +41,10 @@ export default function Controle() {
   const lastGarraCommand = useRef('');
   const lastEsteiraCommand = useRef('');
   const lastSliderCommand = useRef('');
-  const wsRef = useRef<WebSocket | null>(null);
-  const isWsConnected = useRef(false);
 
   const [garraCommand, setGarraCommand] = useState('Garra parada');
   const [esteiraCommand, setEsteiraCommand] = useState('Esteira parada');
   const [sliderValue, setSliderValue] = useState(50);
-  const [connectionStatus, setConnectionStatus] = useState<
-    'offline' | 'connecting' | 'online'
-  >('offline');
-
   const focoPosition = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const [detectionResult, setDetectionResult] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -220,15 +221,13 @@ export default function Controle() {
       connectRobotSocket();
 
       return () => {
-        
-          <Stack.Screen options={{ headerShown: false }} />
-          ScreenOrientation.lockAsync(
+        ScreenOrientation.lockAsync(
           ScreenOrientation.OrientationLock.PORTRAIT_UP
-          );
-          disconnectRobotSocket();
+        );
+        disconnectRobotSocket();
       };
-    }, [])
-          );
+    }, [connectRobotSocket, disconnectRobotSocket])
+  );
 
   useEffect(() => {
     const cameraLoop = Animated.loop(
@@ -308,72 +307,6 @@ export default function Controle() {
           if (!result.canceled) {
             Alert.alert('Imagem selecionada', 'Upload preparado com sucesso.');
     }
-  }
-
-          function sendRobotCommand(command: string) {
-            console.log('[MOBO COMMAND]', command);
-
-          if (
-          isWsConnected.current &&
-          wsRef.current?.readyState === WebSocket.OPEN
-          ) {
-            wsRef.current.send(
-              JSON.stringify({
-                command,
-                timestamp: Date.now(),
-              })
-            );
-          return;
-    }
-
-          console.log('[MOBO WS MOCK]', command);
-  }
-
-          function connectRobotSocket() {
-    if (
-          isWsConnected.current ||
-          wsRef.current?.readyState === WebSocket.CONNECTING
-          ) {
-      return;
-    }
-
-          setConnectionStatus('connecting');
-
-          const socket = new WebSocket(ROBOT_WS_URL);
-          wsRef.current = socket;
-
-    socket.onopen = () => {
-            setConnectionStatus('online');
-          isWsConnected.current = true;
-          console.log('[MOBO WS] conectado');
-    };
-
-    socket.onmessage = (event) => {
-            console.log('[MOBO WS MESSAGE]', event.data);
-    };
-
-    socket.onerror = (error) => {
-            console.log('[MOBO WS ERROR]', error);
-          setConnectionStatus('offline');
-          isWsConnected.current = false;
-    };
-
-    socket.onclose = () => {
-            console.log('[MOBO WS] desconectado');
-          setConnectionStatus('offline');
-          isWsConnected.current = false;
-          wsRef.current = null;
-    };
-  }
-
-          function disconnectRobotSocket() {
-    if (wsRef.current) {
-            wsRef.current.close();
-    }
-
-          wsRef.current = null;
-          isWsConnected.current = false;
-          setConnectionStatus('offline');
   }
 
           function getDirectionCommand(prefix: string, direction: string) {
@@ -948,7 +881,7 @@ export default function Controle() {
                       />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => router.push('/calendario')}>
+                    <TouchableOpacity onPress={() => router.push('/registros')}>
                       <Image
                         source={require('../assets/images/calend.png')}
                         style={{ width: 48, height: 48, resizeMode: 'contain' }}
